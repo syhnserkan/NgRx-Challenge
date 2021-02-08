@@ -1,0 +1,21 @@
+<div class="row my-4">
+  <div class="col-md-12">
+    <form [formGroup]="postForm" (ngSubmit)="onSubmit()">
+      <h3>Update Post</h3>
+      <hr />
+      <div class="mb-3">
+        <label>Title</label>
+        <input type="text" class="form-control" formControlName="title" />
+        <div class="text-danger">{{ showErrors("title") }}</div>
+      </div>
+      <div class="mb-3">
+        <label>Description</label>
+        <textarea class="form-control" formControlName="description"></textarea>
+        <div class="text-danger">{{ showErrors("description") }}</div>
+      </div>
+      <div class="my-3">
+        <button type="submit" class="btn btn-success">Update Post</button>
+      </div>
+    </form>
+  </div>
+</div>
