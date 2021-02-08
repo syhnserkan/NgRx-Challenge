@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from 'src/app/store/app.state';
 import { decrement, increment, reset } from '../state/counter.actions';
-import { CounterState } from '../state/counter.state';
 
 @Component({
   selector: 'app-counter-buttons',
