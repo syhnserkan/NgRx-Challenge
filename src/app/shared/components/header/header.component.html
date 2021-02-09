@@ -61,7 +61,7 @@
           >
         </li>
         <li class="nav-item" *ngIf="isAuthenticated$ | async">
-          <a class="nav-link" routerLinkActive="active" href="#">Logout</a>
+          <a class="nav-link" routerLinkActive="active" (click)="onLogout($event)">Logout</a>
         </li>
       </ul>
     </div>

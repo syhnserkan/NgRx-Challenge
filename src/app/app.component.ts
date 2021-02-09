@@ -21,6 +21,6 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.showLoading$ = this.store.select(getLoading);
     this.errorMessage$ = this.store.select(getErrorMessage);
-    this.store.dispatch(autoLogin());
+    this.store.dispatch(autoLogin()); // sayfa yüklendiğinde auto login devreye girer.
   }
 }

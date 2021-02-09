@@ -41,14 +41,7 @@ export class EditPostComponent implements OnInit, OnDestroy {
 
   createForm() {
     this.postForm = this.fb.group({
-      title: [
-        this.post.title,
-        [
-          Validators.required,
-          Validators.minLength(6),
-          Validators.maxLength(10),
-        ],
-      ],
+      title: [this.post.title, [Validators.required, Validators.minLength(6)]],
       description: [
         this.post.description,
         [Validators.required, Validators.minLength(10)],
@@ -86,6 +79,7 @@ export class EditPostComponent implements OnInit, OnDestroy {
     //navigate
     this.router.navigate(['posts']);
   }
+
   ngOnDestroy() {
     this.destroy$.next();
   }

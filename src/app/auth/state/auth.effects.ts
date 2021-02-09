@@ -12,6 +12,7 @@ import {
 } from 'src/app/store/Shared/shared.actions';
 import {
   autoLogin,
+  autoLogout,
   loginStart,
   loginSuccess,
   signupStart,
@@ -37,7 +38,7 @@ export class AuthEffects {
             this.store.dispatch(setErrorMessage({ message: '' }));
             const user = this.authService.formatUser(data);
             this.authService.setUserInLocalStorage(user);
-            return loginSuccess({ user });
+            return loginSuccess({ user, redirect: true });
           }),
           catchError(
             ({
@@ -56,11 +57,14 @@ export class AuthEffects {
   });
 
   loginAndSignupRedirect$ = createEffect(
+    // we call auto login in app component. Whenever autologin effect call, It will return loginSucces and it will be redirect.
     () => {
       return this.actions$.pipe(
         ofType(...[loginSuccess, signupSuccess]), // we can use one redirect effect to redirect login and signup
         tap((action) => {
-          this.router.navigate(['/']);
+          if (action.redirect) {
+            this.router.navigate(['/']);
+          }
         })
       );
     },
@@ -77,7 +81,7 @@ export class AuthEffects {
             this.store.dispatch(setErrorMessage({ message: '' }));
             const user = this.authService.formatUser(data);
             this.authService.setUserInLocalStorage(user);
-            return signupSuccess({ user });
+            return signupSuccess({ user, redirect: true });
           }),
           catchError(
             ({
@@ -95,13 +99,24 @@ export class AuthEffects {
     );
   });
 
-  autoLogin$ = createEffect(
+  autoLogin$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(autoLogin),
+      mergeMap((action) => {
+        const user = this.authService.getUserFromLocalStorage();
+        // console.log(user);
+        return of(loginSuccess({ user, redirect: false })); // we shouldn't redirect because when the page rerender It will redirect to home page.
+      })
+    );
+  });
+
+  logout$ = createEffect(
     () => {
       return this.actions$.pipe(
-        ofType(autoLogin),
+        ofType(autoLogout),
         map((action) => {
-          const user = this.authService.getUserFromLocalStorage();
-          console.log(user);
+          this.authService.logout();
+          this.router.navigate(['auth']);
         })
       );
     },
