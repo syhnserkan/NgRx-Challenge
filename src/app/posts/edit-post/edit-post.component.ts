@@ -19,33 +19,42 @@ export class EditPostComponent implements OnInit, OnDestroy {
   postForm: FormGroup;
   destroy$ = new Subject();
 
-  constructor(
-    private route: ActivatedRoute,
-    private store: Store<AppState>,
-    private fb: FormBuilder,
-    private router: Router
-  ) {}
+  constructor(private store: Store<AppState>, private fb: FormBuilder) {}
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
-      const id = params.get('id');
-      this.store
-        .select(getPostById, { id })
-        .pipe(takeUntil(this.destroy$))
-        .subscribe((data) => {
-          this.post = data;
-          this.createForm();
-        });
-    });
+    // Second clean way
+    this.createForm();
+    this.store
+      .select(getPostById)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((post) => {
+        this.post = post;
+        if (post) {
+          // when the page load the post get empty and we can get error. That's why we have to check it.
+          this.postForm.patchValue({
+            title: post.title,
+            description: post.description,
+          });
+        }
+      });
+    // First way
+
+    // this.route.paramMap.subscribe((params) => {
+    //   const id = params.get('id');
+    //   this.store
+    //     .select(getPostById, { id })
+    //     .pipe(takeUntil(this.destroy$))
+    //     .subscribe((data) => {
+    //       this.post = data;
+    //       this.createForm();
+    //     });
+    // });
   }
 
   createForm() {
     this.postForm = this.fb.group({
-      title: [this.post.title, [Validators.required, Validators.minLength(6)]],
-      description: [
-        this.post.description,
-        [Validators.required, Validators.minLength(10)],
-      ],
+      title: [null, [Validators.required, Validators.minLength(6)]],
+      description: [null, [Validators.required, Validators.minLength(10)]],
     });
   }
 
@@ -76,8 +85,8 @@ export class EditPostComponent implements OnInit, OnDestroy {
     };
     //dipatch the action
     this.store.dispatch(updatePost({ post }));
-    //navigate
-    this.router.navigate(['posts']);
+    //navigated in the posts.effects
+    // this.router.navigate(['posts']);
   }
 
   ngOnDestroy() {

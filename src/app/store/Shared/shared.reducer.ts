@@ -1,4 +1,3 @@
-import { state } from '@angular/animations';
 import { createReducer, on } from '@ngrx/store';
 import { setErrorMessage, setLoadingSpinner } from './shared.actions';
 import { initialState } from './shared.state';

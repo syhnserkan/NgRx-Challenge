@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { map, mergeMap, switchMap } from 'rxjs/operators';
+import { RouterNavigatedAction, ROUTER_NAVIGATION } from '@ngrx/router-store';
+import { filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { PostsService } from 'src/app/services/posts.service';
 import {
   addPost,
@@ -15,7 +17,11 @@ import {
 
 @Injectable()
 export class PostsEffects {
-  constructor(private actions$: Actions, private postsService: PostsService) {}
+  constructor(
+    private actions$: Actions,
+    private postsService: PostsService,
+    private route: Router
+  ) {}
 
   loadPosts$ = createEffect(() => {
     return this.actions$.pipe(
@@ -64,6 +70,38 @@ export class PostsEffects {
         return this.postsService.deletePost(action.id).pipe(
           map((data) => {
             return deletePostSuccess({ id: action.id });
+          })
+        );
+      })
+    );
+  });
+
+  updatePostRedirect$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(updatePostSuccess),
+        tap((action) => {
+          this.route.navigate(['posts']);
+        })
+      );
+    },
+    { dispatch: false }
+  );
+
+  getSinglePost$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(ROUTER_NAVIGATION),
+      filter((r: RouterNavigatedAction) => {
+        return r.payload.routerState.url.startsWith('/posts/details'); // whenever this url come, this effect will be executed.
+      }),
+      map((r: RouterNavigatedAction) => {
+        return r.payload.routerState['params']['id'];
+      }),
+      switchMap((id) => {
+        return this.postsService.getPostById(id).pipe(
+          map((post) => {
+            const postData = [{ ...post, id }];
+            return loadPostsSuccess({ posts: postData });
           })
         );
       })
