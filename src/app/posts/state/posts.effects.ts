@@ -1,37 +1,56 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { Update } from '@ngrx/entity';
 import { RouterNavigatedAction, ROUTER_NAVIGATION } from '@ngrx/router-store';
-import { filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
+import { of } from 'rxjs';
+import {
+  filter,
+  map,
+  mergeMap,
+  switchMap,
+  tap,
+  withLatestFrom,
+} from 'rxjs/operators';
+import { Post } from 'src/app/models/posts.model';
 import { PostsService } from 'src/app/services/posts.service';
+import { AppState } from 'src/app/store/app.state';
 import {
   addPost,
   addPostSuccess,
   deletePost,
   deletePostSuccess,
+  dummyAction,
   loadPosts,
   loadPostsSuccess,
   updatePost,
   updatePostSuccess,
 } from './posts.actions';
+import { getPosts } from './posts.selector';
 
 @Injectable()
 export class PostsEffects {
   constructor(
     private actions$: Actions,
     private postsService: PostsService,
-    private route: Router
+    private route: Router,
+    private store: Store<AppState>
   ) {}
 
   loadPosts$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(loadPosts),
-      mergeMap((action) => {
-        return this.postsService.getPosts().pipe(
-          map((posts) => {
-            return loadPostsSuccess({ posts });
-          })
-        );
+      withLatestFrom(this.store.select(getPosts)),
+      mergeMap(([action, posts]) => {
+        if (!posts.length || posts.length === 1) {
+          return this.postsService.getPosts().pipe(
+            map((posts) => {
+              return loadPostsSuccess({ posts });
+            })
+          );
+        }
+        return of(dummyAction());
       })
     );
   });
@@ -56,7 +75,11 @@ export class PostsEffects {
       switchMap((action) => {
         return this.postsService.updatePost(action.post).pipe(
           map((data) => {
-            return updatePostSuccess({ post: action.post });
+            const updatedPost: Update<Post> = {
+              id: action.post.id,
+              changes: { ...action.post },
+            };
+            return updatePostSuccess({ post: updatedPost });
           })
         );
       })
@@ -97,13 +120,17 @@ export class PostsEffects {
       map((r: RouterNavigatedAction) => {
         return r.payload.routerState['params']['id'];
       }),
-      switchMap((id) => {
-        return this.postsService.getPostById(id).pipe(
-          map((post) => {
-            const postData = [{ ...post, id }];
-            return loadPostsSuccess({ posts: postData });
-          })
-        );
+      withLatestFrom(this.store.select(getPosts)),
+      switchMap(([id, posts]) => {
+        if (!posts.length) {
+          return this.postsService.getPostById(id).pipe(
+            map((post) => {
+              const postData = [{ ...post, id }];
+              return loadPostsSuccess({ posts: postData });
+            })
+          );
+        }
+        return of(dummyAction()); // stream expect a observable. That's why I declared dummyAction
       })
     );
   });
